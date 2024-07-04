@@ -77,7 +77,7 @@
     }
 </style>
 
-<button class="btn burgerbar position-absolute shadow" type="button" data-bs-toggle="offcanvas"
+<button class="btn burgerbar position-fixed shadow" type="button" data-bs-toggle="offcanvas"
     data-bs-target="#offcanvasSidebar" aria-controls="offcanvasSidebar" style="background-color: #BA4D52;">
     &#9776;
 </button>
@@ -122,15 +122,10 @@
 
                 </li>
                 <li class="rounded mb-2"><a href="/abana-kitchen-ordering-system/reports/daily_sales_report.php" name="" id=""
-                        class="btn btn-red p-2" href="#" role="button"><i class="bi bi-receipt-cutoff"></i>Daily Sales
+                        class="btn btn-red p-2" href="#" role="button"><i class="bi bi-receipt-cutoff"></i>Sales
                         Reports</a>
                 </li>
                 <li>
-                <li class="rounded mb-2"><a href="/abana-kitchen-ordering-system/reports/weekly_sales_report.php" name="" id=""
-                        class="btn btn-red p-2" href="#" role="button"><i class="bi bi-receipt-cutoff"></i>Weekly Sales
-                        Reports</a>
-
-                </li>
                 <li>
                     <div class="accordion" id="sidebarAccordion">
                         <div class="accordion-item">
@@ -148,11 +143,10 @@
                                         <li><a href="/abana-kitchen-ordering-system/reports/home.php#top-selling">Most Ordered Products</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/reports/home.php#frozen">Orders for Frozen Products</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/dashboard/home.php#highestTotalAmount">Orders with Highest Total Amount</a></li>
-                                        <li><a href="/abana-kitchen-ordering-system/dashboard/staff-list.php">Search for Customers</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/dashboard/staff-list.php#staffs">Staff and Their Supervisors</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/dashboard/orders-list.php#search">Search Orders Assigned to Staff</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/dashboard/staff-list.php#unassignedStaff">Unassigned Staff</a></li>
-                                        <li><a href="/abana-kitchen-ordering-system/dashboard/orders_list.php#betweenDates">Search Orders Between Certain Date</a></li>
+                                        <li><a href="/abana-kitchen-ordering-system/dashboard/orders-list.php#betweenDates">Search Orders Between Certain Date</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/reports/home.php#paymentStatistics">Count of QR vs Online Transfer</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/dashboard/home.php#scheduledCompletion">Products Scheduled for Completion</a></li>
                                     </ul>
