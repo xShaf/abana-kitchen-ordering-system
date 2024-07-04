@@ -10,3 +10,23 @@
 <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-timepicker/0.5.2/css/bootstrap-timepicker.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    body {
+        background-image: url('/abana-kitchen-ordering-system/assets/images/bg.jpg');
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+
+    .fixed-bottom {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 25px;
+        background-color: black;
+        color: white;
+        text-align: center;
+    }
+</style>
