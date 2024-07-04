@@ -5,9 +5,9 @@ require_once ('../includes/connection.db.php');
 $order_id = isset($_GET['order_id']) ? $_GET['order_id'] : null;
 
 // Query to fetch data
-$sql = "SELECT o.order_id, o.order_date, o.staff_id, o.order_time, o.required_date, o.required_time,
+$sql = "SELECT o.order_id, o.order_date, o.staff_id, TO_CHAR(o.ORDER_TIME, 'HH24:MI:ss') ORDER_TIME, o.required_date, TO_CHAR(o.REQUIRED_TIME, 'HH24:MI:ss') REQUIRED_TIME,
                o.cust_name, o.cust_phonenum, o.delivery_address, o.order_remarks,
-               r.receipt_id, r.recp_date, r.recp_time, r.payment_method, r.total_amount,
+               r.receipt_id, r.recp_date, TO_CHAR(R.RECP_TIME, 'HH24:MI:ss') RECP_TIME, r.payment_method, r.total_amount,
                od.prod_id, od.quantity, od.amount, od.request, p.prod_name 
         FROM orders o
         JOIN receipt r ON o.order_id = r.order_id

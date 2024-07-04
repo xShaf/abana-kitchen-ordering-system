@@ -42,11 +42,10 @@
 </header>
 
 <body>
-    <div class="bg-light px-4 text-center shadow">
-        <h1><strong>Query Reports</strong></h1>
-        <hr>
+    <div class="bg-white bg-gradient shadow">
+        <h2 class="p-3 text-center"><strong>Query Reports</strong></h2>
     </div>
-    <div id="top-selling" class="container rounded shadow p-4">
+    <div id="top-selling" class="container bg-white bg-opacity-75 rounded shadow p-4">
         <h4><strong>
                 <center>Most Ordered Products</center>
             </strong></h4>
@@ -84,9 +83,9 @@
             ?>
         </div>
     </div>
-
+    <br>
     <!-- Orders for Products table with toggle -->
-    <div id="frozen" class="container rounded shadow p-4 mt-4">
+    <div id="frozen" class="container bg-white bg-opacity-75 rounded shadow p-4">
         <h4><strong>
                 <center>Orders for Frozen Products (and Freshly Made)</center>
             </strong></h4>
@@ -113,7 +112,7 @@
         </div>
     </div>
     <br>
-    <div id="paymentStatistics" class="container rounded shadow p-4">
+    <div id="paymentStatistics" class="container bg-white bg-opacity-75 rounded shadow p-4">
         <h4><strong>
                 <center>Payment Method Statistics</center>
             </strong></h4>
@@ -147,7 +146,7 @@
                         echo '<div class="card-body">';
                         echo '<h5 class="card-title">Total Instant Transfers</h5>';
                         echo '<p class="card-text">Total Number: ' . $totalInstantTransfer . '</p>';
-                        echo '<p class="card-text">Total Amount: RM' . $totalAmountInstantTransfer . '</p>';
+                        echo '<p class="card-text">Total Amount: RM' . number_format($totalAmountInstantTransfer, 2) . '</p>';
                         echo '</div>';
                         echo '</div>';
                         echo '</div>';
@@ -157,7 +156,7 @@
                         echo '<div class="card-body">';
                         echo '<h5 class="card-title">Total QR Payments</h5>';
                         echo '<p class="card-text">Total Number: ' . $totalQR . '</p>';
-                        echo '<p class="card-text">Total Amount: RM' . $totalAmountQR . '</p>';
+                        echo '<p class="card-text">Total Amount: RM' . number_format($totalAmountQR, 2) . '</p>';
                         echo '</div>';
                         echo '</div>';
                         echo '</div>';
