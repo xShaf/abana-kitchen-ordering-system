@@ -124,7 +124,8 @@ include ("../includes/header-tag.php");
             <div class="col-md-6">
                 <form method="GET" action="">
                     <div class="input-group">
-                        <input type="text" class="form-control" name="filter" placeholder="Filter by name...">
+                        <input type="text" class="form-control" name="filter"
+                            placeholder="Search by Staff ID, Staff Name...">
                         <div class="input-group-append ps-2">
                             <button class="btn btn-search btn-success" type="submit">
                                 <i class="bi bi-search"></i>
@@ -154,7 +155,7 @@ include ("../includes/header-tag.php");
             <tbody>
                 <?php
                 $filter = isset($_GET['filter']) ? strtoupper($_GET['filter']) : '';
-                $sql = "SELECT s.STAFF_ID,s.STAFF_NAME, s.STAFF_IC, s.STAFF_PHONENUM, sup.STAFF_NAME AS SUPERVISOR_NAME FROM STAFF s LEFT JOIN STAFF sup ON s.SUPERVISOR_ID = sup.STAFF_ID WHERE UPPER(s.STAFF_NAME) LIKE '%' || :filter || '%' ORDER BY s.STAFF_ID ASC";
+                $sql = "SELECT s.STAFF_ID,s.STAFF_NAME, s.STAFF_IC, s.STAFF_PHONENUM, sup.STAFF_NAME AS SUPERVISOR_NAME FROM STAFF s LEFT JOIN STAFF sup ON s.SUPERVISOR_ID = sup.STAFF_ID WHERE UPPER(s.STAFF_ID) LIKE '%' || :filter || '%' OR UPPER(s.STAFF_NAME) LIKE '%' || :filter || '%' ORDER BY s.STAFF_ID ASC";
                 $stid = oci_parse($dbconn, $sql);
                 oci_bind_by_name($stid, ":filter", $filter);
                 oci_execute($stid);
@@ -185,7 +186,7 @@ include ("../includes/header-tag.php");
     </div>
 
     <div id="unassignedStaff" class="container mt-4">
-        <h2>Unassigned Staff</h2>
+        <h4>Unassigned Staff</h4>
         <table class="table table-hover table-bordered">
             <thead>
                 <tr>
