@@ -103,7 +103,7 @@ oci_execute($dateStmt);
                     <div class="card-body shadow">
                         <h3 class="card-title"><strong><i class="bi bi-cash"></i> INCOME</strong></h3>
                         <p class="card-text">
-                        <h3 class="text-white">RM<?php echo $totalRevenue ?></h3>
+                        <h3 class="text-white">RM<?php echo number_format($totalRevenue,2) ?></h3>
                         </p>
                     </div>
                 </div>
