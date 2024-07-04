@@ -175,10 +175,10 @@ unset($_SESSION['cart']);
 
 <body>
     <?php include ("../includes/sidebar.php"); ?>
-    <div class="receipt-header P-4">
-        <h1>ORDER SUBMITTED</h1>
+    <div class="receipt-header bg-white bg-gradient shadow">
+        <h2 class="text-center"><strong>ORDER SUBMITTED</strong></h2>
     </div>
-    <div class="receipt-container mt-4">
+    <div class="receipt-container mt-4 bg-white">
 
         <h3>
             <center>Thank you for your order!</center>
@@ -189,7 +189,8 @@ unset($_SESSION['cart']);
         <div class="text-center">
             <div class="text-center">
                 <button class="btn btn-success" onclick="openReceiptInNewTab()">Generate Receipt</button>
-                <a href="../dashboard/home.php" name="" id="" class="btn btn-primary" href="#" role="button">Back to Home</a>
+                <a href="../dashboard/home.php" name="" id="" class="btn btn-primary" href="#" role="button">Back to
+                    Home</a>
             </div>
         </div>
     </div>

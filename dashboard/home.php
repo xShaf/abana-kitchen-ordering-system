@@ -71,11 +71,10 @@ oci_execute($dateStmt);
 
 <body class="gradient">
     <div class="bg-white bg-gradient shadow">
-        <h1 class="p-4 text-center"><strong>ABANA KITCHEN ORDERING SYSTEM</strong></h1>
-        <hr>
+        <h2 class="p-3 text-center"><strong>ABANA KITCHEN ORDERING SYSTEM</strong></h2>
     </div>
 
-    <div class="container bg-white bg-gradient border rounded shadow-lg p-4">
+    <div class="container bg-white bg-gradient bg-opacity-75 border rounded shadow-lg p-4">
         <h2 class=""><strong>Sales Summary</strong></h2>
         <div class="row p-4">
             <div class="col-12 col-md-4 mb-4">
@@ -103,58 +102,42 @@ oci_execute($dateStmt);
                     <div class="card-body shadow">
                         <h3 class="card-title"><strong><i class="bi bi-cash"></i> INCOME</strong></h3>
                         <p class="card-text">
-                        <h3 class="text-white">RM<?php echo number_format($totalRevenue,2) ?></h3>
+                        <h3 class="text-white">RM<?php echo number_format($totalRevenue, 2) ?></h3>
                         </p>
                     </div>
                 </div>
             </div>
-
-        </div>
-
-    </div>
-    <br>
-    <div class="container bg-white p-4 shadow-lg rounded">
-        <div class="col-12 mb-4">
-            <div class="card shadow">
-                <h3 class="p-4">Add new order here!</h3>
-                <a href="../order/customer_details.php" name="" id="" class="btn btn-primary btn-lg m-4" href="#"
-                    role="button">Add new order!</a>
-
-            </div>
-        </div>
-
-        <!-- Products Scheduled for Completion Section -->
-        <div id="scheduledCompletion" class="col-12 mb-4">
-            <div class="card shadow">
-                <h2 class="p-4"><strong>Products Scheduled for Completion</strong></h2>
-                <div class="p-4">
-                    <form method="GET" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="preparationDate" class="form-label">Select Preparation Date:</label>
-                                <select class="form-control" id="preparationDate" name="preparationDate">
-                                    <?php
-                                    while ($dateRow = oci_fetch_assoc($dateStmt)) {
-                                        $dateValue = $dateRow['PREPARATION_DATE'];
-                                        echo "<option value='$dateValue'>$dateValue</option>";
-                                    }
-                                    oci_free_statement($dateStmt);
-                                    ?>
-                                </select>
+            <div id="scheduledCompletion" class="col-12 mb-4">
+                <div class="card shadow">
+                    <h2 class="p-4"><strong>Products Scheduled for Completion</strong></h2>
+                    <div class="p-4">
+                        <form method="GET" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="preparationDate" class="form-label">Select Preparation Date:</label>
+                                    <select class="form-control" id="preparationDate" name="preparationDate">
+                                        <?php
+                                        while ($dateRow = oci_fetch_assoc($dateStmt)) {
+                                            $dateValue = $dateRow['PREPARATION_DATE'];
+                                            echo "<option value='$dateValue'>$dateValue</option>";
+                                        }
+                                        oci_free_statement($dateStmt);
+                                        ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <button type="submit" class="btn btn-primary mt-4">Filter</button>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <button type="submit" class="btn btn-primary mt-4">Filter</button>
-                            </div>
-                        </div>
-                    </form>
+                        </form>
 
-                    <!-- Display queried results -->
-                    <?php
-                    if (isset($_GET['preparationDate'])) {
-                        $selectedDate = $_GET['preparationDate'];
+                        <!-- Display queried results -->
+                        <?php
+                        if (isset($_GET['preparationDate'])) {
+                            $selectedDate = $_GET['preparationDate'];
 
-                        // Query for products scheduled for completion on the selected date
-                        $sql = "
+                            // Query for products scheduled for completion on the selected date
+                            $sql = "
                         SELECT OD.prod_ID, P.prod_Name, OD.quantity, OD.preparation_Date, O.order_ID, O.order_Date, S.staff_ID, S.staff_Name
                         FROM ORDER_DETAILS OD
                         JOIN ORDERS O ON OD.order_ID = O.order_ID
@@ -163,52 +146,61 @@ oci_execute($dateStmt);
                         WHERE OD.preparation_Date = TO_DATE(:selectedDate, 'yyyy-mm-dd')
                         ORDER BY O.order_Date";
 
-                        $stid = oci_parse($dbconn, $sql);
-                        oci_bind_by_name($stid, ":selectedDate", $selectedDate);
-                        oci_execute($stid);
+                            $stid = oci_parse($dbconn, $sql);
+                            oci_bind_by_name($stid, ":selectedDate", $selectedDate);
+                            oci_execute($stid);
 
-                        // Display results in a table
-                        echo '<div class="mt-4">';
-                        echo '<table class="table table-bordered table-hover">';
-                        echo '<thead>';
-                        echo '<tr>';
-                        echo '<th scope="col">Order ID</th>';
-                        echo '<th scope="col">Order Date</th>';
-                        echo '<th scope="col">Product Name</th>';
-                        echo '<th scope="col">Quantity</th>';
-                        echo '<th scope="col">Preparation Date</th>';
-                        echo '<th scope="col">Staff Name</th>';
-                        echo '</tr>';
-                        echo '</thead>';
-                        echo '<tbody>';
-
-                        while ($row = oci_fetch_assoc($stid)) {
+                            // Display results in a table
+                            echo '<div class="mt-4">';
+                            echo '<table class="table table-bordered table-hover">';
+                            echo '<thead>';
                             echo '<tr>';
-                            echo '<td>' . htmlspecialchars($row["ORDER_ID"], ENT_QUOTES, 'UTF-8') . '</td>';
-                            echo '<td>' . htmlspecialchars($row["ORDER_DATE"], ENT_QUOTES, 'UTF-8') . '</td>';
-                            echo '<td>' . htmlspecialchars($row["PROD_NAME"], ENT_QUOTES, 'UTF-8') . '</td>';
-                            echo '<td>' . htmlspecialchars($row["QUANTITY"], ENT_QUOTES, 'UTF-8') . '</td>';
-                            echo '<td>' . htmlspecialchars($row["PREPARATION_DATE"], ENT_QUOTES, 'UTF-8') . '</td>';
-                            echo '<td>' . htmlspecialchars($row["STAFF_NAME"], ENT_QUOTES, 'UTF-8') . '</td>';
+                            echo '<th scope="col">Order ID</th>';
+                            echo '<th scope="col">Order Date</th>';
+                            echo '<th scope="col">Product Name</th>';
+                            echo '<th scope="col">Quantity</th>';
+                            echo '<th scope="col">Preparation Date</th>';
+                            echo '<th scope="col">Staff Name</th>';
                             echo '</tr>';
+                            echo '</thead>';
+                            echo '<tbody>';
+
+                            while ($row = oci_fetch_assoc($stid)) {
+                                echo '<tr>';
+                                echo '<td>' . htmlspecialchars($row["ORDER_ID"], ENT_QUOTES, 'UTF-8') . '</td>';
+                                echo '<td>' . htmlspecialchars($row["ORDER_DATE"], ENT_QUOTES, 'UTF-8') . '</td>';
+                                echo '<td>' . htmlspecialchars($row["PROD_NAME"], ENT_QUOTES, 'UTF-8') . '</td>';
+                                echo '<td>' . htmlspecialchars($row["QUANTITY"], ENT_QUOTES, 'UTF-8') . '</td>';
+                                echo '<td>' . htmlspecialchars($row["PREPARATION_DATE"], ENT_QUOTES, 'UTF-8') . '</td>';
+                                echo '<td>' . htmlspecialchars($row["STAFF_NAME"], ENT_QUOTES, 'UTF-8') . '</td>';
+                                echo '</tr>';
+                            }
+
+                            echo '</tbody>';
+                            echo '</table>';
+                            echo '</div>';
+
+                            oci_free_statement($stid);
                         }
-
-                        echo '</tbody>';
-                        echo '</table>';
-                        echo '</div>';
-
-                        oci_free_statement($stid);
-                    }
-                    ?>
+                        ?>
+                    </div>
                 </div>
             </div>
         </div>
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <h3 class="p-4">Add new order here!</h3>
+                <a href="../order/customer_details.php" name="" id="" class="btn btn-primary btn-lg m-4" href="#"
+                    role="button">Add new order!</a>
 
+            </div>
+        </div>
         <!-- Orders with Highest Total Amount Section -->
         <div id="highestTotalAmount" class="col-12 mb-4">
             <div class="card shadow">
                 <h2 class="p-4"><strong>Orders with Highest Total Amount</strong></h2>
-                <div class="p-4">
+                <p class="ps-4">Free Abana Kitchen Gift (Keychain)</p>
+                <div class="ps-4">
                     <?php
                     // Query for orders with the highest total amount
                     $sql = "
@@ -255,6 +247,8 @@ oci_execute($dateStmt);
                 </div>
             </div>
         </div>
+        <!-- Products Scheduled for Completion Section -->
+
     </div>
 </body>
 

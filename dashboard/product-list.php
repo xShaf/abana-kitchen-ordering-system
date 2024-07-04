@@ -214,10 +214,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <body>
     <div class="bg-light px-4 text-center">
-        <h1><strong>PRODUCT LIST</strong></h1>
+        <h2 class="p-2"><strong>PRODUCT LIST</strong></h2>
         <hr>
     </div>
-    <div class="container">
+    <div class="container bg-white bg-opacity-75 rounded p-4">
         <div class="row justify-content-center m-4">
             <div class="col-md-6">
                 <form method="GET" action="">
@@ -290,8 +290,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     ;
                     echo "</td>";
                     echo "<td class='text-center'>";
+                    echo "<div class='btn-group'>";
                     echo "<button class='btn btn-primary btn-update' data-id='" . $row["PROD_ID"] . "' data-type='" . $row["PROD_TYPE"] . "' data-bs-toggle='modal' data-bs-target='#updateModal'>Update</button> ";
                     echo "<button class='btn btn-danger btn-delete' data-id='" . $row["PROD_ID"] . "' data-type='" . $row["PROD_TYPE"] . "' data-bs-toggle='modal' data-bs-target='#deleteModal'>Delete</button>";
+                    echo "</div>";
                     echo "</td>";
                     echo "</tr>";
                 }

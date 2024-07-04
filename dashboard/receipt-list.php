@@ -23,11 +23,10 @@ if (!isset($_SESSION['staff_id'])) {
 </style>
 
 <body>
-    <div class="bg-light px-4 text-center">
-        <h1><strong>RECEIPT LIST</strong></h1>
-        <hr>
+    <div class="bg-white bg-gradident shadow">
+        <h2 class="p-3 text-center"><strong>RECEIPT LIST</strong></h2>
     </div>
-    <div class="container">
+    <div class="container bg-white bg-opacity-75 rounded p-4">
         <div class="row justify-content-center m-4">
             <div class="col-md-6">
                 <form method="GET" action="">

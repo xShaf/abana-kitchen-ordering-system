@@ -10,7 +10,7 @@ if (!isset($_SESSION['staff_id'])) {
 function fetchOrderDetails($orderId)
 {
     global $dbconn;
-    $sql = "SELECT p.prod_id, p.prod_name, od.orderlist_id, od.quantity, od.amount, od.request, od.preparation_date
+    $sql = "SELECT p.prod_id, p.prod_name, od.orderlist_id, od.quantity, od.amount, od.request, TO_CHAR(od.preparation_date, 'yyyy-mm-dd HH24:MI:SS') AS preparation_date
             FROM product p
             LEFT JOIN order_details od ON p.prod_id = od.prod_id
             WHERE od.order_id = :orderId";
@@ -20,6 +20,9 @@ function fetchOrderDetails($orderId)
 
     $orderDetails = [];
     while ($row = oci_fetch_assoc($stmt)) {
+        // Format preparation_date to remove milliseconds and display in 24-hour format
+        $row['PREPARATION_DATE'] = date('Y-m-d H:i:s', strtotime($row['PREPARATION_DATE']));
+
         $orderDetails[] = $row;
     }
     oci_free_statement($stmt);
@@ -28,22 +31,23 @@ function fetchOrderDetails($orderId)
 
 // Handle form submissions
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
-    $filterStaffId = isset($_GET['filterStaffId']) ? strtoupper($_GET['filterStaffId']) : '';
+    $filterStaff = isset($_GET['filterStaff']) ? strtoupper($_GET['filterStaff']) : '';
     $startDate = isset($_GET['startDate']) ? $_GET['startDate'] : '';
     $endDate = isset($_GET['endDate']) ? $_GET['endDate'] : '';
 
-    if (!empty($filterStaffId)) {
+    if (!empty($filterStaff)) {
         // Filter by Staff ID
-        $sql = "SELECT ORDER_ID, STAFF_ID, CUST_NAME, CUST_PHONENUM, DELIVERY_ADDRESS, ORDER_DATE, ORDER_TIME, REQUIRED_DATE, REQUIRED_TIME, ORDER_REMARKS, ORDER_STATUS 
+        $sql = "SELECT ORDER_ID, STAFF_ID, CUST_NAME, CUST_PHONENUM, DELIVERY_ADDRESS, ORDER_DATE, TO_CHAR(ORDER_TIME, 'HH24:MI') AS ORDER_TIME, REQUIRED_DATE, TO_CHAR(REQUIRED_TIME, 'HH24:MI') AS REQUIRED_TIME, ORDER_REMARKS, ORDER_STATUS 
                 FROM ORDERS
-                WHERE UPPER(STAFF_ID) LIKE '%' || :filterStaffId || '%'
+                WHERE UPPER(STAFF_ID) LIKE '%' || :filterStaff || '%'
+                OR UPPER(CUST_NAME) LIKE '%' || :filterStaff || '%'
                 ORDER BY REQUIRED_TIME DESC";
 
         $stid = oci_parse($dbconn, $sql);
-        oci_bind_by_name($stid, ":filterStaffId", $filterStaffId);
+        oci_bind_by_name($stid, ":filterStaff", $filterStaff);
     } elseif (!empty($startDate) && !empty($endDate)) {
         // Filter by Date Range
-        $sql = "SELECT ORDER_ID, STAFF_ID, CUST_NAME, CUST_PHONENUM, DELIVERY_ADDRESS, ORDER_DATE, ORDER_TIME, REQUIRED_DATE, REQUIRED_TIME, ORDER_REMARKS, ORDER_STATUS 
+        $sql = "SELECT ORDER_ID, STAFF_ID, CUST_NAME, CUST_PHONENUM, DELIVERY_ADDRESS, ORDER_DATE, TO_CHAR(ORDER_TIME, 'HH24:MI') AS ORDER_TIME, REQUIRED_DATE, TO_CHAR(REQUIRED_TIME, 'HH24:MI') AS REQUIRED_TIME, ORDER_REMARKS, ORDER_STATUS 
                 FROM ORDERS
                 WHERE ORDER_DATE BETWEEN TO_DATE(:startDate, 'yyyy-mm-dd') AND TO_DATE(:endDate, 'yyyy-mm-dd')
                 ORDER BY REQUIRED_TIME DESC";
@@ -53,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         oci_bind_by_name($stid, ":endDate", $endDate);
     } else {
         // Default query to fetch all orders
-        $sql = "SELECT ORDER_ID, STAFF_ID, CUST_NAME, CUST_PHONENUM, DELIVERY_ADDRESS, ORDER_DATE, ORDER_TIME, REQUIRED_DATE, REQUIRED_TIME, ORDER_REMARKS, ORDER_STATUS 
+        $sql = "SELECT ORDER_ID, STAFF_ID, CUST_NAME, CUST_PHONENUM, DELIVERY_ADDRESS, ORDER_DATE, TO_CHAR(ORDER_TIME, 'HH24:MI') AS ORDER_TIME, REQUIRED_DATE, TO_CHAR(REQUIRED_TIME, 'HH24:MI') AS REQUIRED_TIME, ORDER_REMARKS, ORDER_STATUS 
                 FROM ORDERS
                 ORDER BY REQUIRED_TIME DESC";
 
@@ -79,19 +83,18 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 </style>
 
 <body>
-    <div class="bg-light px-4 text-center">
-        <h1><strong>ORDERS LIST</strong></h1>
-        <hr>
+    <div class="bg-white bg-gradient shadow">
+        <h2 class="p-3 text-center"><strong>ORDERS LIST</strong></h2>
     </div>
 
-    <div class="container">
+    <div class="container bg-white bg-gradient bg-opacity-75 rounded p-4">
         <div class="row justify-content-center m-4">
             <div class="col-md-6">
                 <!-- Staff ID Search Form -->
                 <form method="GET" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
                     <div class="input-group">
-                        <input type="text" class="form-control" name="filterStaffId" placeholder="Filter by Staff ID..."
-                            value="<?php echo htmlspecialchars($filterStaffId); ?>">
+                        <input type="text" class="form-control" name="filterStaff" placeholder="Filter by Staff ID..."
+                            value="<?php echo htmlspecialchars($filterStaff); ?>">
                         <div class="input-group-append ps-2">
                             <button class="btn btn-search btn-success" type="submit">
                                 <i class="bi bi-search"></i>

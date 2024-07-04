@@ -114,14 +114,13 @@ include ("../includes/header-tag.php");
     }
 </style>
 
-<body>
-    <div id="staffs" class="bg-light px-4 text-center">
-        <h1><strong>STAFF LIST</strong></h1>
-        <hr>
+<body class="gradient">
+    <div id="staffs" class="bg-white bg-gradient shadow">
+        <h2 class="p-3 text-center"><strong>STAFF LIST</strong></h2>
     </div>
-    <div class="container">
-        <div class="row justify-content-center m-4">
-            <div class="col-md-6">
+    <div class="container bg-white bg-opacity-75 rounded py-4">
+        <div class="row justify-content-center p-4">
+            <div class="col-md-6 mt-4">
                 <form method="GET" action="">
                     <div class="input-group">
                         <input type="text" class="form-control" name="filter"
@@ -175,7 +174,7 @@ include ("../includes/header-tag.php");
                 }
 
                 if (oci_num_rows($stid) == 0) {
-                    echo "<tr><td colspan='5'>No staff found</td></tr>";
+                    echo "<tr><td colspan='6'>No staff found</td></tr>";
                 }
 
                 oci_free_statement($stid);
@@ -184,8 +183,8 @@ include ("../includes/header-tag.php");
             </tbody>
         </table>
     </div>
-
-    <div id="unassignedStaff" class="container mt-4">
+    <br>
+    <div id="unassignedStaff" class="container bg-white bg-opacity-75 rounded p-4">
         <h4>Unassigned Staff</h4>
         <table class="table table-hover table-bordered">
             <thead>

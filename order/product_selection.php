@@ -102,6 +102,7 @@ try {
 
 CloseConn($dbconn);
 
+$totalAmount = 0;
 ?>
 
 
@@ -116,13 +117,12 @@ CloseConn($dbconn);
 </header>
 
 <body>
-    <div class="bg-light mt-4 px-4 text-center">
-        <h1><strong>SELECT PRODUCT</strong></h1>
-        <hr>
+    <div class="bg-white bg-gradient shadow">
+        <h2 class="p-3 text-center"><strong>SELECT PRODUCT</strong></h2>
     </div>
     <div class="p-4">
-        <div class="row">
-            <div class="px-4 shadow col-md-6">
+        <div class="row justify-content-between align-content-center">
+            <div class="bg-white bg-gradient bg-opacity-75 border rounded shadow-lg p-4 col-md-6">
                 <h3>Add to Cart</h3>
                 <form action="product_selection.php" method="POST" class="mb-4">
                     <input type="text" name="search" class="form-control" placeholder="Search by Product Name"
@@ -179,10 +179,11 @@ CloseConn($dbconn);
                     </table>
                 </form>
             </div>
-            <div class="px-4 shadow col-md-6">
+            <div class="bg-white bg-gradient bg-opacity-75 border rounded shadow-lg p-4 col-md-5 me-4">
                 <h3>Customer Details</h3>
                 <?php if ($customer_details): ?>
                     <div class="mb-4">
+                        <strong>New Order ID Number:</strong> <?php echo $new_order_id; ?><br>
                         <strong>Name:</strong> <?php echo htmlspecialchars($customer_details['cust_name']); ?><br>
                         <strong>Phone:</strong> <?php echo htmlspecialchars($customer_details['cust_phone']); ?><br>
                         <strong>Address:</strong> <?php echo htmlspecialchars($customer_details['cust_address']); ?><br>
@@ -193,7 +194,6 @@ CloseConn($dbconn);
                         <strong>Remarks:</strong> <?php echo htmlspecialchars($customer_details['remarks']); ?><br>
                     </div>
                 <?php endif; ?>
-                <p><strong>New Order ID Number:</strong> <?php echo $new_order_id; ?></p>
                 <h3>Cart</h3>
                 <table class="table table-hover table-bordered">
                     <thead>
@@ -210,6 +210,7 @@ CloseConn($dbconn);
                     <tbody>
                         <?php foreach ($_SESSION['cart'] as $id => $product): ?>
                             <tr>
+                                <?php $totalAmount += $product['price'] * $product['quantity']; ?>
                                 <td><?php echo htmlspecialchars($id); ?></td>
                                 <td><img class='object-fit-fill'
                                         src='../assets/images/products/<?php echo htmlspecialchars($id); ?>.png' width='100'
@@ -227,6 +228,10 @@ CloseConn($dbconn);
                                 </td>
                             </tr>
                         <?php endforeach; ?>
+                        <tr>
+                            <td colspan="3" class="text-right"><strong>Total Amount:</strong></td>
+                            <td class="text-end" colspan="4"><strong><?php echo "RM" . number_format($totalAmount, 2); ?></td>
+                        </tr>
                     </tbody>
                 </table>
                 <a class="btn btn-primary" href="checkout.php">Proceed to Checkout</a>

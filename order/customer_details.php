@@ -6,7 +6,7 @@ if (!isset($_SESSION['staff_id'])) {
     exit;
 }
 $today = date("Y-m-d");
-$twoMoreDays = date("Y-m-d", strtotime($today . " +4 days"));
+$twoMoreDays = date("Y-m-d", strtotime($today . " +3 days"));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cust_name = htmlspecialchars(trim($_POST['cust_name']));
@@ -46,24 +46,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </header>
 
 <body>
-    <div class="bg-light mt-4 text-center">
-        <h1><strong>CUSTOMER DETAILS</strong></h1>
-        <hr>
+    <div class="bg-white bg-gradient shadow">
+        <h2 class="p-3 text-center"><strong>CUSTOMER DETAILS</strong></h2>
     </div>
-    <div class="container rounded shadow p-4 mt-4">
+    <div class="container bg-white bg-opacity-75 rounded shadow p-4 mt-4">
         <h3>Enter customer details</h3>
         <?php if (isset($error)): ?>
             <div class="alert alert-danger"><?php echo $error; ?></div>
         <?php endif; ?>
         <form action="customer_details.php" method="post">
             <label class="form-label" for="cust_name">Name:</label>
-            <input class="form-control" type="text" id="cust_name" name="cust_name" placeholder="Ali Bin Abu" required><br>
+            <input class="form-control" type="text" id="cust_name" name="cust_name" placeholder="Ali Bin Abu"
+                required><br>
 
             <label class="form-label" for="cust_phone">Phone:</label>
-            <input class="form-control" type="text" id="cust_phone" name="cust_phone" placeholder="0123456789" required><br>
+            <input class="form-control" type="text" id="cust_phone" name="cust_phone" placeholder="0123456789"
+                required><br>
 
             <label class="form-label" for="cust_address">Delivery Address:</label>
-            <textarea class="form-control" id="cust_address" name="cust_address" placeholder="Universiti Teknologi MARA Cawangan Perak Kampus Tapah, 35400 Tapah Road, Perak" required></textarea><br>
+            <textarea class="form-control" id="cust_address" name="cust_address"
+                placeholder="Universiti Teknologi MARA Cawangan Perak Kampus Tapah, 35400 Tapah Road, Perak"
+                required></textarea><br>
 
             <label class="form-lable" for="requiredDate">Required Date:</label>
             <input class="form-control" type="date" name="requiredDate" min="<?php echo $twoMoreDays ?>" requried><br>
@@ -72,7 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input id="" name="requiredTime" class="form-control" type="time" required /><br>
 
             <label class="form-label" for="remarks">Order Remarks:</label>
-            <textarea name="remarks" id="" class="form-control" placeholder="If I'm not home, leave to neighbor"></textarea><br>
+            <textarea name="remarks" id="" class="form-control"
+                placeholder="If I'm not home, leave to neighbor"></textarea><br>
 
             <div class="d-flex flex-row-reverse">
                 <input name="" id="" class="btn btn-primary" type="submit" value="Next" />
