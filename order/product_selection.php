@@ -12,7 +12,6 @@ if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = array();
 }
 
-
 // Function to sanitize input
 function sanitize_input($data)
 {
@@ -57,6 +56,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 require_once ("../includes/connection.db.php");
 
+// Fetch customer details from the session
+$customer_details = isset($_SESSION['customer_details']) ? $_SESSION['customer_details'] : null;
+
 try {
     $sql = "SELECT PROD_ID, PROD_NAME, PROD_PRICE FROM PRODUCT";
     if ($search_keyword) {
@@ -79,10 +81,29 @@ try {
 } catch (Exception $e) {
     echo "Error: " . $e->getMessage();
 }
+try {
+    // Get the current value of the sequence
+    $order_id_query = "SELECT LAST_NUMBER FROM USER_SEQUENCES WHERE SEQUENCE_NAME = 'ORDERS_ID_SEQ'";
+    $stmt = oci_parse($dbconn, $order_id_query);
+    $success = oci_execute($stmt);
+    if ($success) {
+        $result = oci_fetch_assoc($stmt);
+        $new_order_id = $result ? $result['LAST_NUMBER'] : null;
+    } else {
+        $error = oci_error($stmt);
+        echo "Error executing query: " . $error['message'];
+    }
+    oci_free_statement($stmt);
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
+}
+
+
 
 CloseConn($dbconn);
 
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -159,6 +180,21 @@ CloseConn($dbconn);
                 </form>
             </div>
             <div class="px-4 shadow col-md-6">
+                <h3>Customer Details</h3>
+                <?php if ($customer_details): ?>
+                    <div class="mb-4">
+                        <strong>Name:</strong> <?php echo htmlspecialchars($customer_details['cust_name']); ?><br>
+                        <strong>Phone:</strong> <?php echo htmlspecialchars($customer_details['cust_phone']); ?><br>
+                        <strong>Address:</strong> <?php echo htmlspecialchars($customer_details['cust_address']); ?><br>
+                        <strong>Required Date:</strong>
+                        <?php echo htmlspecialchars($customer_details['requiredDate']); ?><br>
+                        <strong>Required Time:</strong>
+                        <?php echo htmlspecialchars($customer_details['requiredTime']); ?><br>
+                        <strong>Remarks:</strong> <?php echo htmlspecialchars($customer_details['remarks']); ?><br>
+                    </div>
+                <?php endif; ?>
+                <p><strong>New Order ID Number:</strong> <?php echo $new_order_id; ?></p>
+                <h3>Cart</h3>
                 <table class="table table-hover table-bordered">
                     <thead>
                         <tr>
