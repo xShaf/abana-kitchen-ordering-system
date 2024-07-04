@@ -345,5 +345,8 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         </div>
     </div>
 </body>
-
+<?php
+include_once ('../includes/footer.php');
+include_once ('../includes/footer-tag.php');
+?>
 </html>
