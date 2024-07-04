@@ -148,7 +148,7 @@
                                         <li><a href="/abana-kitchen-ordering-system/reports/home.php#top-selling">Most Ordered Products</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/reports/home.php#frozen">Orders for Frozen Products</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/dashboard/home.php#highestTotalAmount">Orders with Highest Total Amount</a></li>
-                                        <li><a href="/abana-kitchen-ordering-system/reports/home.php#searchCustomers">Search for Customers</a></li>
+                                        <li><a href="/abana-kitchen-ordering-system/dashboard/staff-list.php">Search for Customers</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/dashboard/staff-list.php#staffs">Staff and Their Supervisors</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/dashboard/orders-list.php#search">Search Orders Assigned to Staff</a></li>
                                         <li><a href="/abana-kitchen-ordering-system/dashboard/staff-list.php#unassignedStaff">Unassigned Staff</a></li>
