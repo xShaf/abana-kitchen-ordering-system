@@ -48,7 +48,7 @@
     </div>
     <div id="top-selling" class="container rounded shadow p-4">
         <h4><strong>
-                <center>Best Top Selling Products</center>
+                <center>Most Ordered Products</center>
             </strong></h4>
         <div class="row card-container">
             <?php
@@ -88,7 +88,7 @@
     <!-- Orders for Products table with toggle -->
     <div id="frozen" class="container rounded shadow p-4 mt-4">
         <h4><strong>
-                <center>Orders for Products</center>
+                <center>Orders for Frozen Products (and Freshly Made)</center>
             </strong></h4>
         <div class="d-flex justify-content-center mb-3">
             <button class="btn btn-primary me-2" id="toggleFrozen">Frozen</button>
@@ -169,56 +169,6 @@
             </div>
         </div>
     </div>
-    <br>
-    <div id="searchCustomers" class="container rounded shadow p-4">
-        <h4><strong>
-                <center>CUSTOMERS LIST</center>
-            </strong></h4>
-        <div class="input-group mb-3">
-            <form action="" method="get" class="d-flex">
-                <input type="text" class="form-control" id="searchInput" name="filter"
-                    placeholder="Search by customer name">
-                <button class="btn btn-success ms-2" type="submit">
-                    <i class="bi bi-search"></i>
-                </button>
-            </form>
-        </div>
-
-        <div class="card-container">
-            <table class="table table-hover table-bordered">
-                <thead>
-                    <tr>
-                        <th scope="col">Customer Name</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $filter = isset($_GET['filter']) ? strtoupper($_GET['filter']) : '';
-                    $sql = "SELECT CUST_NAME
-                    FROM ORDERS
-                    WHERE UPPER(CUST_NAME) LIKE '%' || :filter || '%' 
-                    ORDER BY CUST_NAME";
-                    $stid = oci_parse($dbconn, $sql);
-                    oci_bind_by_name($stid, ":filter", $filter);
-                    oci_execute($stid);
-
-                    while ($row = oci_fetch_assoc($stid)) {
-                        echo '<tr>';
-                        echo '<td>' . htmlspecialchars($row["CUST_NAME"], ENT_QUOTES, 'UTF-8') . '</td>';
-                        echo '</tr>';
-                    }
-                    if (oci_num_rows($stid) == 0) {
-                        echo "<tr><td colspan='1'>No customers found</td></tr>";
-                    }
-
-                    oci_free_statement($stid);
-                    CloseConn($dbconn);
-                    ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
 </body>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
