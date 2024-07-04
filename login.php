@@ -119,7 +119,7 @@ include ("includes/header-tag.php");
     <header>
     </header>
     <main>
-        <div class="login-container">
+        <div class="login-container shadow">
             <img src="assets/images/logo.png" alt="Logo">
             <h2>Login</h2>
             <?php if ($login_error): ?>
