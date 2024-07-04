@@ -30,75 +30,84 @@ $totalAmount = 0;
 </header>
 
 <body>
-    <div class="bg-light mt-4 text-center">
-        <h1><strong>CHECKOUT</strong></h1>
-        <hr>
+    <div class="bg-white bg-gradient shadow">
+        <h2 class="p-3 text-center"><strong>CHECKOUT</strong></h>
     </div>
-    <div class="container rounded shadow p-4 mt-4">
-        <h3>Customer Details</h3>
-        <p>Name: <?php echo htmlspecialchars($customer_details['cust_name']); ?></p>
-        <p>Phone: <?php echo htmlspecialchars($customer_details['cust_phone']); ?></p>
-        <p>Address: <?php echo htmlspecialchars($customer_details['cust_address']); ?></p>
-        <p>Date Required: <?php echo htmlspecialchars($customer_details['requiredDate']); ?></p>
-        <p>Time Required: <?php echo htmlspecialchars($customer_details['requiredTime']); ?></p>
-        <p>Remarks: <?php echo htmlspecialchars($customer_details['remarks']); ?></p>
+    <div class="container bg-white bg-gradient bg-opacity-75 border rounded shadow-lg p-4">
+        <div class="bg-white rounded shadow p-4">
+            <h3>Customer Details</h3>
+            <p>Name: <?php echo htmlspecialchars($customer_details['cust_name']); ?></p>
+            <p>Phone: <?php echo htmlspecialchars($customer_details['cust_phone']); ?></p>
+            <p>Address: <?php echo htmlspecialchars($customer_details['cust_address']); ?></p>
+            <p>Date Required: <?php echo htmlspecialchars($customer_details['requiredDate']); ?></p>
+            <p>Time Required: <?php echo htmlspecialchars($customer_details['requiredTime']); ?></p>
+            <p>Remarks: <?php echo htmlspecialchars($customer_details['remarks']); ?></p>
 
 
 
-        <h3>Order Summary</h3>
-        <table class="table table-hover table-bordered">
-            <thead>
-                <tr>
-                    <th>Product ID</th>
-                    <th>Images</th>
-                    <th>Name</th>
-                    <th>Quantity</th>
-                    <th>Request</th>
-                    <th>Unit Price</th>
-                    <th>Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-
-                <?php foreach ($selected_products as $prod_id => $product): ?>
+            <h3>Order Summary</h3>
+            <table class="table table-hover table-bordered">
+                <thead>
                     <tr>
-                        <?php $amount = $product['quantity'] * $product['price'];
-                        $totalAmount += $amount; ?>
-                        <td><?php echo htmlspecialchars($prod_id); ?></td>
-                        <td><img class='object-fit-fill'
-                                src='../assets/images/products/<?php echo htmlspecialchars($prod_id); ?>.png' width='100'
-                                height='100'></td>
-                        <td><?php echo $product['name']; ?></td>
-                        <td><?php echo htmlspecialchars($product['quantity']); ?></td>
-                        <td><?php echo htmlspecialchars($product['request']); ?></td>
-                        <td>RM<?php echo htmlspecialchars($product['price']); ?></td>
-                        <td><?php echo htmlspecialchars($amount); ?></td>
+                        <th>Product ID</th>
+                        <th>Images</th>
+                        <th>Name</th>
+                        <th>Quantity</th>
+                        <th>Request</th>
+                        <th>Unit Price</th>
+                        <th>Amount</th>
                     </tr>
-                <?php endforeach; ?>
-                <tr>
-                    <th colspan="6">Total</th>
-                    <th>RM<?php echo htmlspecialchars($totalAmount); ?></t>
-                </tr>
+                </thead>
+                <tbody>
+
+                    <?php foreach ($selected_products as $prod_id => $product): ?>
+                        <tr>
+                            <?php $amount = $product['quantity'] * $product['price'];
+                            $totalAmount += $amount; ?>
+                            <td><?php echo htmlspecialchars($prod_id); ?></td>
+                            <td><img class='object-fit-fill'
+                                    src='../assets/images/products/<?php echo htmlspecialchars($prod_id); ?>.png'
+                                    width='100' height='100'></td>
+                            <td><?php echo $product['name']; ?></td>
+                            <td><?php echo htmlspecialchars($product['quantity']); ?></td>
+                            <td><?php echo htmlspecialchars($product['request']); ?></td>
+                            <td>RM<?php echo htmlspecialchars($product['price']); ?></td>
+                            <td><?php echo htmlspecialchars($amount); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    <tr>
+                        <th colspan="6">Total</th>
+                        <th>RM<?php echo htmlspecialchars($totalAmount); ?></t>
+                    </tr>
 
 
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
+        <br>
         <div class="row justify-content-between">
-            <div class="col-auto">
+            <div class="col-auto me-auto">
+                <br>
+                <br>
+                <br>
+                <br>
                 <a href="product_selection.php" class="btn btn-primary">Back</a>
             </div>
             <div class="col-auto">
                 <form method="POST" action="receipt.php">
-                <div class="form-group">
-                    <label for="payment_method">Payment Method:</label>
-                    <select name="payment_method" id="payment_method" class="form-control" required>
-                        <option value="">Select Payment Method</option>
-                        <option value="QR">QR</option>
-                        <option value="Online Transfer">Online Transfer</option>
-                    </select>
-                </div>
-                <br>
-                <button type="submit" class="btn btn-primary">Submit Order</button>
+                    <div class="form-group">
+                        <label for="payment_method">Payment Method:</label>
+                        <select name="payment_method" id="payment_method" class="form-control" required>
+                            <option value="">Select Payment Method</option>
+                            <option value="QR">QR</option>
+                            <option value="Online Transfer">Online Transfer</option>
+                        </select>
+                    </div>
+                    <br>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">Submit Order</button>
+                    </div>
+
                 </form>
             </div>
         </div>
