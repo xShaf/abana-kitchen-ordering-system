@@ -41,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 FROM ORDERS
                 WHERE UPPER(STAFF_ID) LIKE '%' || :filterStaff || '%'
                 OR UPPER(CUST_NAME) LIKE '%' || :filterStaff || '%'
-                ORDER BY REQUIRED_TIME DESC";
+                ORDER BY ORDER_DATE DESC";
 
         $stid = oci_parse($dbconn, $sql);
         oci_bind_by_name($stid, ":filterStaff", $filterStaff);
@@ -50,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         $sql = "SELECT ORDER_ID, STAFF_ID, CUST_NAME, CUST_PHONENUM, DELIVERY_ADDRESS, ORDER_DATE, TO_CHAR(ORDER_TIME, 'HH24:MI') AS ORDER_TIME, REQUIRED_DATE, TO_CHAR(REQUIRED_TIME, 'HH24:MI') AS REQUIRED_TIME, ORDER_REMARKS, ORDER_STATUS 
                 FROM ORDERS
                 WHERE ORDER_DATE BETWEEN TO_DATE(:startDate, 'yyyy-mm-dd') AND TO_DATE(:endDate, 'yyyy-mm-dd')
-                ORDER BY REQUIRED_TIME DESC";
+                ORDER BY ORDER_DATE DESC";
 
         $stid = oci_parse($dbconn, $sql);
         oci_bind_by_name($stid, ":startDate", $startDate);
@@ -59,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         // Default query to fetch all orders
         $sql = "SELECT ORDER_ID, STAFF_ID, CUST_NAME, CUST_PHONENUM, DELIVERY_ADDRESS, ORDER_DATE, TO_CHAR(ORDER_TIME, 'HH24:MI') AS ORDER_TIME, REQUIRED_DATE, TO_CHAR(REQUIRED_TIME, 'HH24:MI') AS REQUIRED_TIME, ORDER_REMARKS, ORDER_STATUS 
                 FROM ORDERS
-                ORDER BY REQUIRED_TIME DESC";
+                ORDER BY ORDER_DATE DESC";
 
         $stid = oci_parse($dbconn, $sql);
     }
