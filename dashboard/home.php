@@ -107,9 +107,9 @@ oci_execute($dateStmt);
                     </div>
                 </div>
             </div>
-            <div id="scheduledCompletion" class="col-12 mb-4">
+            <div id="preparationSchedule" class="col-12 mb-4">
                 <div class="card shadow">
-                    <h2 class="p-4"><strong>Products Scheduled for Completion</strong></h2>
+                    <h2 class="p-4"><strong>Orders Preparation Schedule</strong></h2>
                     <div class="p-4">
                         <form method="GET" action="<?php echo $_SERVER['PHP_SELF']; ?>">
                             <div class="row">
@@ -189,7 +189,7 @@ oci_execute($dateStmt);
         </div>
         <div class="col-12 mb-4">
             <div class="card shadow">
-                <h3 class="p-4">Add new order here!</h3>
+                <h2 class="p-4"><strong>Add new order here!</strong></h2>
                 <a href="../order/customer_details.php" name="" id="" class="btn btn-primary btn-lg m-4" href="#"
                     role="button">Add new order!</a>
 
