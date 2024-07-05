@@ -3,7 +3,8 @@ require_once '../includes/connection.db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
     $startDate = isset($_GET['startDate']) ? $_GET['startDate'] : '';
-    $endDate = date('Y-m-d', strtotime($startDate . ' +5 days'));
+    $endDate = date('Y-m-d', strtotime($startDate . ' +4 days')); // Adjusted to include 5 days total
+
     $totalSalesByDay = [];
     $totalOrdersByDay = [];
     $totalOrders = 0;
@@ -14,6 +15,25 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     $orderDetails = [];
 
     if (!empty($startDate)) {
+        // Generate date range array
+        $dateRange = [];
+        for ($i = 0; $i < 5; $i++) {
+            $dateRange[] = date('Y-m-d', strtotime($startDate . " +$i days"));
+        }
+
+        // Helper function to initialize data arrays with zero values
+        function initializeDataArray($dateRange)
+        {
+            $dataArray = [];
+            foreach ($dateRange as $date) {
+                $dataArray[$date] = 0;
+            }
+            return $dataArray;
+        }
+
+        $totalSalesByDay = initializeDataArray($dateRange);
+        $totalOrdersByDay = initializeDataArray($dateRange);
+
         // Total Sales by Day
         $sql = "SELECT 
                     TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD') AS ORDER_DATE,
@@ -35,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         oci_execute($stid);
 
         while ($row = oci_fetch_assoc($stid)) {
-            $totalSalesByDay[] = $row;
+            $totalSalesByDay[$row['ORDER_DATE']] = $row['TOTAL_SALES'];
         }
 
         oci_free_statement($stid);
@@ -59,49 +79,26 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         oci_execute($stid);
 
         while ($row = oci_fetch_assoc($stid)) {
-            $totalOrdersByDay[] = $row;
+            $totalOrdersByDay[$row['ORDER_DATE']] = $row['TOTAL_ORDERS'];
         }
 
         oci_free_statement($stid);
 
-        // Total Orders and Average Order Value
+        $averageOrderValueByDay = initializeDataArray($dateRange);
+
         $sql = "SELECT 
-                    COUNT(O.ORDER_ID) AS TOTAL_ORDERS,
-                    AVG(R.TOTAL_AMOUNT) AS AVERAGE_ORDER_VALUE
-                FROM 
-                    ORDERS O
-                JOIN 
-                    RECEIPT R ON O.ORDER_ID = R.ORDER_ID
-                WHERE 
-                    O.ORDER_DATE BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')";
-
-        $stid = oci_parse($dbconn, $sql);
-        oci_bind_by_name($stid, ":startDate", $startDate);
-        oci_bind_by_name($stid, ":endDate", $endDate);
-        oci_execute($stid);
-
-        if ($row = oci_fetch_assoc($stid)) {
-            $totalOrders = $row['TOTAL_ORDERS'];
-            $averageOrderValue = $row['AVERAGE_ORDER_VALUE'];
-        }
-
-        oci_free_statement($stid);
-
-        // Most Ordered Products
-        $sql = "SELECT 
-                    P.PROD_NAME, SUM(OD.QUANTITY) AS QUANTITY_SOLD
-                FROM 
-                    ORDER_DETAILS OD
-                JOIN 
-                    PRODUCT P ON OD.PROD_ID = P.PROD_ID
-                JOIN 
-                    ORDERS O ON OD.ORDER_ID = O.ORDER_ID
-                WHERE 
-                    O.ORDER_DATE BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
-                GROUP BY 
-                    P.PROD_NAME
-                ORDER BY 
-                    QUANTITY_SOLD DESC";
+            TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD') AS ORDER_DATE,
+            AVG(R.TOTAL_AMOUNT) AS AVG_ORDER_VALUE
+        FROM 
+            ORDERS O
+        JOIN 
+            RECEIPT R ON O.ORDER_ID = R.ORDER_ID
+        WHERE 
+            O.ORDER_DATE BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
+        GROUP BY 
+            TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD')
+        ORDER BY 
+            TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD')";
 
         $stid = oci_parse($dbconn, $sql);
         oci_bind_by_name($stid, ":startDate", $startDate);
@@ -109,10 +106,48 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         oci_execute($stid);
 
         while ($row = oci_fetch_assoc($stid)) {
-            $mostOrderedProducts[] = $row;
+            $averageOrderValueByDay[$row['ORDER_DATE']] = $row['AVG_ORDER_VALUE'];
         }
 
         oci_free_statement($stid);
+
+        // Most Ordered Products by Date Range
+        $mostOrderedProductsByPeriod = [];
+
+        $sql = "SELECT 
+            P.PROD_NAME, SUM(OD.QUANTITY) AS QUANTITY_SOLD,
+            TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD') AS ORDER_DATE
+        FROM 
+            ORDER_DETAILS OD
+        JOIN 
+            PRODUCT P ON OD.PROD_ID = P.PROD_ID
+        JOIN 
+            ORDERS O ON OD.ORDER_ID = O.ORDER_ID
+        WHERE 
+            O.ORDER_DATE BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
+        GROUP BY 
+            P.PROD_NAME, TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD')
+        ORDER BY 
+            ORDER_DATE, QUANTITY_SOLD DESC";
+
+        $stid = oci_parse($dbconn, $sql);
+        oci_bind_by_name($stid, ":startDate", $startDate);
+        oci_bind_by_name($stid, ":endDate", $endDate);
+        oci_execute($stid);
+
+        while ($row = oci_fetch_assoc($stid)) {
+            $date = $row['ORDER_DATE'];
+            if (!isset($mostOrderedProductsByPeriod[$date])) {
+                $mostOrderedProductsByPeriod[$date] = [];
+            }
+            $mostOrderedProductsByPeriod[$date][] = [
+                'PROD_NAME' => $row['PROD_NAME'],
+                'QUANTITY_SOLD' => $row['QUANTITY_SOLD']
+            ];
+        }
+
+        oci_free_statement($stid);
+
 
         // Payment Method Breakdown
         $sql = "SELECT 
@@ -183,6 +218,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -199,15 +235,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         .container-title {
             margin-bottom: 20px;
         }
-
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             <?php if (!empty($startDate)): ?>
                 // Data for Total Sales by Day Chart
-                var dates = <?php echo json_encode(array_column($totalSalesByDay, 'ORDER_DATE')); ?>;
-                var sales = <?php echo json_encode(array_column($totalSalesByDay, 'TOTAL_SALES')); ?>;
+                var dates = <?php echo json_encode(array_keys($totalSalesByDay)); ?>;
+                var sales = <?php echo json_encode(array_values($totalSalesByDay)); ?>;
 
                 // Total Sales by Day Chart
                 var ctxTotalSales = document.getElementById('totalSalesChart').getContext('2d');
@@ -243,7 +278,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 });
 
                 // Data for Total Orders by Day Chart
-                var orders = <?php echo json_encode(array_column($totalOrdersByDay, 'TOTAL_ORDERS')); ?>;
+                var orders = <?php echo json_encode(array_values($totalOrdersByDay)); ?>;
 
                 // Total Orders by Day Chart
                 var ctxTotalOrders = document.getElementById('totalOrdersChart').getContext('2d');
@@ -268,6 +303,42 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                             title: {
                                 display: true,
                                 text: 'Total Orders by Day'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    },
+                });
+
+                // Data for Average Order Value by Day Chart
+                var averageOrderValues = <?php echo json_encode(array_values($averageOrderValueByDay)); ?>;
+
+                // Average Order Value by Day Chart
+                var ctxAvgOrderValue = document.getElementById('averageOrderValueChart').getContext('2d');
+                var avgOrderValueChart = new Chart(ctxAvgOrderValue, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Average Order Value (RM)',
+                            data: averageOrderValues,
+                            backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                            borderColor: 'rgba(255, 159, 64, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false,
+                            },
+                            title: {
+                                display: true,
+                                text: 'Average Order Value by Day'
                             }
                         },
                         scales: {
@@ -342,30 +413,42 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                     },
                 });
 
-                // Data for Most Ordered Products Chart
-                var productNames = <?php echo json_encode(array_column($mostOrderedProducts, 'PROD_NAME')); ?>;
-                var productQuantities = <?php echo json_encode(array_column($mostOrderedProducts, 'QUANTITY_SOLD')); ?>;
+                // Data for Most Ordered Products by Period Chart
+                var productNamesByPeriod = <?php echo json_encode(array_keys($mostOrderedProductsByPeriod)); ?>;
+                var productQuantitiesByPeriod = <?php echo json_encode(array_values($mostOrderedProductsByPeriod)); ?>;
 
-                // Most Ordered Products Chart
-                var ctxMostOrdered = document.getElementById('mostOrderedProductsChart').getContext('2d');
-                var mostOrderedProductsChart = new Chart(ctxMostOrdered, {
-                    type: 'pie',
+                // Most Ordered Products by Period Chart
+                var ctxMostOrderedByPeriod = document.getElementById('mostOrderedProductsByPeriodChart').getContext('2d');
+                var mostOrderedByPeriodChart = new Chart(ctxMostOrderedByPeriod, {
+                    type: 'bar',
                     data: {
-                        labels: productNames,
-                        datasets: [{
-                            data: productQuantities,
-                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
-                        }]
+                        labels: productNamesByPeriod,
+                        datasets: productQuantitiesByPeriod.map(function (products) {
+                            return {
+                                label: products[0]['PROD_NAME'], // Assuming the first product in each array is the most ordered
+                                data: products.map(function (product) {
+                                    return product['QUANTITY_SOLD'];
+                                }),
+                                backgroundColor: '#FF6384', // Random color for each dataset
+                                borderColor: '#FF6384',
+                                borderWidth: 1
+                            };
+                        })
                     },
                     options: {
-                        responsive: false,
+                        responsive: true,
                         plugins: {
                             legend: {
                                 position: 'top',
                             },
                             title: {
                                 display: true,
-                                text: 'Most Ordered Products'
+                                text: 'Most Ordered Products by 5-Day Period'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
                             }
                         }
                     },
@@ -392,20 +475,21 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 document.getElementById('totalAmount').innerText = 'Total Amount: RM' + totalAmount.toFixed(2);
             });
         });
+
     </script>
 </head>
 
 <body>
     <?php include_once ('../includes/sidebar.php'); ?>
     <div class="bg-white gradient shadow">
-        <h2 class="p-3 text-center"><strong>Sales Reports</strong></h2>
+        <h2 class="p-3 text-center"><strong>Daily Sales Reports</strong></h2>
     </div>
     <div class="container bg-white bg-gradient bg-opacity-75 border rounded shadow-lg p-4">
         <div class="container shadow rounded">
             <div class="row justify-content-center align-items-center g-2">
                 <div id="betweenDates" class="row justify-content-center m-4">
                     <div class="col-md-6">
-                        <p>Select the start date to display weekly sales reports:</p>
+                        <p>Select the start date to display daily sales reports:</p>
                         <!-- Date Search Form -->
                         <form method="GET" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
                             <div class="row">
@@ -427,24 +511,22 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         <h5 class="container-title">Total Sales by Day:</h5>
                         <canvas id="totalSalesChart" height="100px"></canvas>
                     </div>
-                    
+
                     <div class="container bg-white rounded mb-4">
                         <h5 class="container-title">Total Orders by Day:</h5>
                         <canvas id="totalOrdersChart" height="100px"></canvas>
                     </div>
-                    
+
                     <div class="container bg-white rounded mb-4">
-                        <h5 class="container-title">Average Order Value from <?php echo htmlspecialchars($startDate); ?> to
-                            <?php echo htmlspecialchars($endDate); ?>:
-                        </h5>
-                        <p class="container-text">RM<?php echo number_format($averageOrderValue, 2); ?></p>
+                        <h5 class="container-title">Average Order Value by Day:</h5>
+                        <canvas id="averageOrderValueChart" height="100px"></canvas>
                     </div>
-                    
+
                     <div class="container bg-white rounded mb-4">
-                        <h5 class="container-title">Most Ordered Products:</h5>
-                        <canvas id="mostOrderedProductsChart" height="500px"></canvas>
+                        <h5 class="container-title">Most Ordered Products by 5-Day Period:</h5>
+                        <canvas id="mostOrderedProductsByPeriodChart" height="100px"></canvas>
                     </div>
-                    
+
                     <div class="container bg-white rounded mb-4">
                         <h5 class="container-title">Payment Method Breakdown:</h5>
                         <ul>
@@ -455,7 +537,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         </ul>
                         <canvas id="paymentMethodChart" height="300px"></canvas>
                     </div>
-                    
+
                     <div class="container bg-white rounded mb-4">
                         <h5 class="container-title">Order Status Summary:</h5>
                         <ul>
