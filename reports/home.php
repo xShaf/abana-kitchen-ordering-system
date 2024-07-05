@@ -85,9 +85,9 @@
     </div>
     <br>
     <!-- Orders for Products table with toggle -->
-    <div id="frozen" class="container bg-white bg-opacity-75 rounded shadow p-4">
+    <div id="productCategory" class="container bg-white bg-opacity-75 rounded shadow p-4">
         <h4><strong>
-                <center>Orders for Frozen Products (and Freshly Made)</center>
+                <center>Orders By Product Category</center>
             </strong></h4>
         <div class="d-flex justify-content-center mb-3">
             <button class="btn btn-primary me-2" id="toggleFrozen">Frozen</button>
@@ -112,9 +112,9 @@
         </div>
     </div>
     <br>
-    <div id="paymentStatistics" class="container bg-white bg-opacity-75 rounded shadow p-4">
+    <div id="qrOnlineTransfer" class="container bg-white bg-opacity-75 rounded shadow p-4">
         <h4><strong>
-                <center>Payment Method Statistics</center>
+                <center>Count of QR vs Online Transfer</center>
             </strong></h4>
         <div class="row justify-content-between align-items-end g-2">
             <div class="col-md-6">
