@@ -13,6 +13,8 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     $paymentMethodBreakdown = [];
     $orderStatusSummary = [];
     $orderDetails = [];
+    $totalQuantity = 0;
+    $sumTotalSales = 0;
 
     if (!empty($startDate)) {
         // Generate date range array
@@ -35,19 +37,18 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         $totalOrdersByDay = initializeDataArray($dateRange);
 
         // Total Sales by Day
-        $sql = "SELECT 
-                    TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD') AS ORDER_DATE,
-                    SUM(R.TOTAL_AMOUNT) AS TOTAL_SALES
-                FROM 
-                    ORDERS O
-                JOIN 
-                    RECEIPT R ON O.ORDER_ID = R.ORDER_ID
-                WHERE 
-                    O.ORDER_DATE BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
-                GROUP BY 
-                    TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD')
-                ORDER BY 
-                    TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD')";
+        $sql = "SELECT
+    TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD') AS ORDER_DATE,
+    SUM(OD.AMOUNT*OD.QUANTITY) AS TOTAL_SALES
+FROM
+    ORDER_DETAILS OD
+    JOIN ORDERS O ON OD.ORDER_ID = O.ORDER_ID
+WHERE
+    O.ORDER_DATE BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
+GROUP BY
+    TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD')
+ORDER BY
+    TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD')";
 
         $stid = oci_parse($dbconn, $sql);
         oci_bind_by_name($stid, ":startDate", $startDate);
@@ -112,23 +113,21 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         oci_free_statement($stid);
 
         // Most Ordered Products by Date Range
-        $mostOrderedProductsByPeriod = [];
-
-        $sql = "SELECT 
-            P.PROD_NAME, SUM(OD.QUANTITY) AS QUANTITY_SOLD,
-            TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD') AS ORDER_DATE
-        FROM 
-            ORDER_DETAILS OD
-        JOIN 
-            PRODUCT P ON OD.PROD_ID = P.PROD_ID
-        JOIN 
-            ORDERS O ON OD.ORDER_ID = O.ORDER_ID
-        WHERE 
-            O.ORDER_DATE BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
-        GROUP BY 
-            P.PROD_NAME, TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD')
-        ORDER BY 
-            ORDER_DATE, QUANTITY_SOLD DESC";
+        $sql = "SELECT
+                    TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD') AS ORDER_DATE,
+                    P.PROD_NAME,
+                    SUM(OD.QUANTITY) AS QUANTITY_SOLD,
+                    RANK() OVER (PARTITION BY TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD') ORDER BY SUM(OD.QUANTITY) DESC) AS RANK
+                FROM
+                    ORDER_DETAILS OD
+                    JOIN PRODUCT P ON OD.PROD_ID = P.PROD_ID
+                    JOIN ORDERS O ON OD.ORDER_ID = O.ORDER_ID
+                WHERE
+                    O.ORDER_DATE BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
+                GROUP BY
+                    TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD'), P.PROD_NAME
+                ORDER BY
+                    ORDER_DATE, RANK";
 
         $stid = oci_parse($dbconn, $sql);
         oci_bind_by_name($stid, ":startDate", $startDate);
@@ -137,20 +136,26 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
         while ($row = oci_fetch_assoc($stid)) {
             $date = $row['ORDER_DATE'];
-            if (!isset($mostOrderedProductsByPeriod[$date])) {
-                $mostOrderedProductsByPeriod[$date] = [];
+            $rank = $row['RANK'];
+            if ($rank <= 5) {
+                if (!isset($mostOrderedProductsByDay[$date])) {
+                    $mostOrderedProductsByDay[$date] = [];
+                }
+                $mostOrderedProductsByDay[$date][] = [
+                    'PROD_NAME' => $row['PROD_NAME'],
+                    'QUANTITY_SOLD' => $row['QUANTITY_SOLD']
+                ];
             }
-            $mostOrderedProductsByPeriod[$date][] = [
-                'PROD_NAME' => $row['PROD_NAME'],
-                'QUANTITY_SOLD' => $row['QUANTITY_SOLD']
-            ];
         }
 
         oci_free_statement($stid);
 
 
+
+
         // Payment Method Breakdown
         $sql = "SELECT 
+                    TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD') AS ORDER_DATE,
                     R.PAYMENT_METHOD, SUM(R.TOTAL_AMOUNT) AS TOTAL_SALES
                 FROM 
                     RECEIPT R
@@ -159,18 +164,29 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 WHERE 
                     O.ORDER_DATE BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
                 GROUP BY 
-                    R.PAYMENT_METHOD";
+                    TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD'), R.PAYMENT_METHOD
+                ORDER BY 
+                    TO_CHAR(O.ORDER_DATE, 'YYYY-MM-DD'), R.PAYMENT_METHOD";
 
         $stid = oci_parse($dbconn, $sql);
         oci_bind_by_name($stid, ":startDate", $startDate);
         oci_bind_by_name($stid, ":endDate", $endDate);
         oci_execute($stid);
 
+        $paymentMethodData = initializeDataArray($dateRange);
+        $paymentMethodDataQR = initializeDataArray($dateRange);
+        $paymentMethodDataOnlineTransfer = initializeDataArray($dateRange);
+
         while ($row = oci_fetch_assoc($stid)) {
-            $paymentMethodBreakdown[] = $row;
+            if ($row['PAYMENT_METHOD'] == 'QR') {
+                $paymentMethodDataQR[$row['ORDER_DATE']] = $row['TOTAL_SALES'];
+            } elseif ($row['PAYMENT_METHOD'] == 'Online Transfer') {
+                $paymentMethodDataOnlineTransfer[$row['ORDER_DATE']] = $row['TOTAL_SALES'];
+            }
         }
 
         oci_free_statement($stid);
+
 
         // Order Status Summary
         $sql = "SELECT 
@@ -212,6 +228,39 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
         while ($row = oci_fetch_assoc($stid)) {
             $orderDetails[] = $row;
+        }
+
+        oci_free_statement($stid);
+    }
+
+    $productSalesReport = [];
+
+    if (!empty($startDate)) {
+        // Product Sales Report
+        $sql = "SELECT
+    P.PROD_NAME,
+    SUM(OD.QUANTITY) AS QUANTITY_SOLD,
+    AVG(OD.AMOUNT) AS AVG_SALES,
+    MAX(OD.AMOUNT / OD.QUANTITY) AS PRICE,
+    SUM(OD.AMOUNT) AS TOTAL_SALES
+FROM
+    ORDER_DETAILS OD
+    JOIN PRODUCT P ON OD.PROD_ID = P.PROD_ID
+    JOIN ORDERS O ON OD.ORDER_ID = O.ORDER_ID
+WHERE
+    O.ORDER_DATE BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:endDate, 'YYYY-MM-DD')
+GROUP BY
+    P.PROD_NAME
+ORDER BY
+    P.PROD_NAME";
+
+        $stid = oci_parse($dbconn, $sql);
+        oci_bind_by_name($stid, ":startDate", $startDate);
+        oci_bind_by_name($stid, ":endDate", $endDate);
+        oci_execute($stid);
+
+        while ($row = oci_fetch_assoc($stid)) {
+            $productSalesReport[] = $row;
         }
 
         oci_free_statement($stid);
@@ -350,32 +399,46 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 });
 
                 // Data for Payment Method Breakdown Chart
-                var paymentMethods = <?php echo json_encode(array_column($paymentMethodBreakdown, 'PAYMENT_METHOD')); ?>;
-                var paymentAmounts = <?php echo json_encode(array_column($paymentMethodBreakdown, 'TOTAL_SALES')); ?>;
-
-                // Payment Method Breakdown Chart
-                var ctxPayment = document.getElementById('paymentMethodChart').getContext('2d');
-                var paymentMethodChart = new Chart(ctxPayment, {
-                    type: 'pie',
+                const ctx = document.getElementById('paymentMethodChart').getContext('2d');
+                const paymentMethodChart = new Chart(ctx, {
+                    type: 'line',
                     data: {
-                        labels: paymentMethods,
+                        labels: <?php echo json_encode(array_keys($paymentMethodData)); ?>,
                         datasets: [{
-                            data: paymentAmounts,
-                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+                            label: 'QR',
+                            data: <?php echo json_encode(array_values($paymentMethodDataQR)); ?>,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            fill: false,
+                            tension: 0.1
+                        }, {
+                            label: 'Online Transfer',
+                            data: <?php echo json_encode(array_values($paymentMethodDataOnlineTransfer)); ?>,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            fill: false,
+                            tension: 0.1
                         }]
                     },
                     options: {
-                        responsive: false,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            },
-                            title: {
+                        responsive: true,
+                        scales: {
+                            x: {
                                 display: true,
-                                text: 'Payment Method Breakdown'
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Total Sales Amount'
+                                }
                             }
                         }
-                    },
+                    }
                 });
 
                 // Data for Order Status Summary Chart
@@ -414,26 +477,31 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 });
 
                 // Data for Most Ordered Products by Period Chart
-                var productNamesByPeriod = <?php echo json_encode(array_keys($mostOrderedProductsByPeriod)); ?>;
-                var productQuantitiesByPeriod = <?php echo json_encode(array_values($mostOrderedProductsByPeriod)); ?>;
+                var mostOrderedProductsByDay = <?php echo json_encode($mostOrderedProductsByDay); ?>;
+                var ctxMostOrderedByDay = document.getElementById('mostOrderedProductsByDayChart').getContext('2d');
+                var datasets = [];
+                dates.forEach(function (date) {
+                    if (mostOrderedProductsByDay[date]) {
+                        mostOrderedProductsByDay[date].forEach(function (product, index) {
+                            if (!datasets[index]) {
+                                datasets[index] = {
+                                    label: product.PROD_NAME,
+                                    data: Array(dates.length).fill(0),
+                                    backgroundColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.2)`,
+                                    borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`,
+                                    borderWidth: 1
+                                };
+                            }
+                            datasets[index].data[dates.indexOf(date)] = product.QUANTITY_SOLD;
+                        });
+                    }
+                });
 
-                // Most Ordered Products by Period Chart
-                var ctxMostOrderedByPeriod = document.getElementById('mostOrderedProductsByPeriodChart').getContext('2d');
-                var mostOrderedByPeriodChart = new Chart(ctxMostOrderedByPeriod, {
+                var mostOrderedByDayChart = new Chart(ctxMostOrderedByDay, {
                     type: 'bar',
                     data: {
-                        labels: productNamesByPeriod,
-                        datasets: productQuantitiesByPeriod.map(function (products) {
-                            return {
-                                label: products[0]['PROD_NAME'], // Assuming the first product in each array is the most ordered
-                                data: products.map(function (product) {
-                                    return product['QUANTITY_SOLD'];
-                                }),
-                                backgroundColor: '#FF6384', // Random color for each dataset
-                                borderColor: '#FF6384',
-                                borderWidth: 1
-                            };
-                        })
+                        labels: dates,
+                        datasets: datasets
                     },
                     options: {
                         responsive: true,
@@ -443,7 +511,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                             },
                             title: {
                                 display: true,
-                                text: 'Most Ordered Products by 5-Day Period'
+                                text: 'Top 5 Most Ordered Products by Day'
                             }
                         },
                         scales: {
@@ -453,6 +521,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         }
                     },
                 });
+
             <?php endif; ?>
 
             // Search and sum functionality for order details
@@ -482,14 +551,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 <body>
     <?php include_once ('../includes/sidebar.php'); ?>
     <div class="bg-white gradient shadow">
-        <h2 class="p-3 text-center"><strong>Daily Sales Reports</strong></h2>
+        <h2 class="p-3 text-center"><strong>Daily Sales Report & Sales Report By Product</strong></h2>
     </div>
     <div class="container bg-white bg-gradient bg-opacity-75 border rounded shadow-lg p-4">
         <div class="container shadow rounded">
             <div class="row justify-content-center align-items-center g-2">
                 <div id="betweenDates" class="row justify-content-center m-4">
                     <div class="col-md-6">
-                        <p>Select the start date to display daily sales reports:</p>
+                        <p>Select the start date to display daily sales reports (5 days duration):</p>
                         <!-- Date Search Form -->
                         <form method="GET" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
                             <div class="row">
@@ -505,7 +574,9 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         </form>
                     </div>
                 </div>
-
+                <?php if (!empty($startDate)): ?>
+                    <h4 class="text-center">Sales Report from <?php echo $startDate ?> until <?php echo $endDate ?></h4>
+                <?php endif; ?>
                 <?php if (!empty($startDate)): ?>
                     <div class="container bg-white rounded mb-4">
                         <h5 class="container-title">Total Sales by Day:</h5>
@@ -523,41 +594,71 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                     </div>
 
                     <div class="container bg-white rounded mb-4">
-                        <h5 class="container-title">Most Ordered Products by 5-Day Period:</h5>
-                        <canvas id="mostOrderedProductsByPeriodChart" height="100px"></canvas>
+                        <h5 class="container-title">Most Ordered Products by Day:</h5>
+                        <canvas id="mostOrderedProductsByDayChart" height="100px"></canvas>
                     </div>
 
                     <div class="container bg-white rounded mb-4">
                         <h5 class="container-title">Payment Method Breakdown:</h5>
-                        <ul>
-                            <?php foreach ($paymentMethodBreakdown as $method): ?>
-                                <li><?php echo htmlspecialchars($method['PAYMENT_METHOD']) . ' - RM' . number_format($method['TOTAL_SALES'], 2); ?>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                        <canvas id="paymentMethodChart" height="300px"></canvas>
+                        <canvas id="paymentMethodChart" height="100px"></canvas>
                     </div>
 
                     <div class="container bg-white rounded mb-4">
                         <h5 class="container-title">Order Status Summary:</h5>
-                        <ul>
-                            <?php foreach ($orderStatusSummary as $status): ?>
-                                <li><?php echo htmlspecialchars($status['ORDER_STATUS']) . ' - ' . $status['COUNT']; ?></li>
-                            <?php endforeach; ?>
-                        </ul>
                         <canvas id="orderStatusChart" height="100px"></canvas>
                     </div>
                 <?php endif; ?>
             </div>
 
         </div>
+        <br>
+        <?php if (!empty($startDate)): ?>
+            <div class="container bg-white rounded mb-4">
+                <h5 class="container-title">Sales Report by Product from <?php echo $startDate ?> until <?php echo $endDate ?>:
+                </h5>
+                <table class="table">
+                    <thead>
+                        <tr class="table-primary">
+                            <th>Product Name</th>
+                            <th>Quantity Sold</th>
+                            <th>Average Sales (RM)</th>
+                            <th>Price (RM)</th>
+                            <th>Total Sales (RM)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($productSalesReport as $report): ?>
+                            <?php
+                            $totalQuantity += $report['QUANTITY_SOLD'];
+                            $sumTotalSales += $report['TOTAL_SALES'];
+                            ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($report['PROD_NAME']); ?></td>
+                                <td><?php echo $report['QUANTITY_SOLD']; ?></td>
+                                <td>RM<?php echo number_format($report['AVG_SALES'], 2); ?></td>
+                                <td>RM<?php echo number_format($report['PRICE'], 2); ?></td>
+                                <td>RM<?php echo number_format($report['TOTAL_SALES'], 2); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        <tr class="table-success">
+                            <td><strong>TOTAL</strong></td>
+                            <td><strong><?php echo htmlspecialchars($totalQuantity); ?></strong></td>
+                            <td colspan="2"></td>
+                            <td><strong>RM<?php echo number_format($sumTotalSales, 2); ?></strong></td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+
         <div class="container bg-white rounded mt-4">
             <h5 class="container-title">Order Details:</h5>
             <input type="text" id="searchProduct" class="form-control" placeholder="Search by product name">
             <p id="totalAmount" class="mt-2">Total Amount: RM0.00</p>
             <table class="table" id="orderDetailsTable">
                 <thead>
-                    <tr>
+                    <tr class="table-primary">
                         <th>Order ID</th>
                         <th>Customer Name</th>
                         <th>Product Name</th>
